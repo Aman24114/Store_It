@@ -8,7 +8,80 @@ import { FormattedDateTime } from "@/components/FormattedDateTime";
 import { Thumbnail } from "@/components/Thumbnail";
 import { Separator } from "@/components/ui/separator";
 import { getFiles, getTotalSpaceUsed } from "@/lib/actions/file.actions";
-import { convertFileSize, getUsageSummary } from "@/lib/utils";
+import { convertFileSize } from "@/lib/utils";
+
+// Define interfaces for type safety
+interface FileTypeInfo {
+  size: number;
+  latestDate: string | Date;
+}
+
+interface TotalSpace {
+  document: FileTypeInfo;
+  image: FileTypeInfo;
+  video: FileTypeInfo;
+  audio: FileTypeInfo;
+  other: FileTypeInfo;
+}
+
+// Helper function to ensure latestDate is always a string
+const formatDate = (date: string | Date): string => {
+  return date instanceof Date ? date.toISOString() : date;
+};
+
+// DASHBOARD UTILS
+export const getUsageSummary = (totalSpace: TotalSpace) => {
+  const mediaLatest =
+    totalSpace.video.latestDate > totalSpace.audio.latestDate
+      ? totalSpace.video.latestDate
+      : totalSpace.audio.latestDate;
+
+  return [
+    {
+      title: "Documents",
+      size: totalSpace.document.size,
+      latestDate: formatDate(totalSpace.document.latestDate),
+      icon: "/assets/icons/file-document-light.svg",
+      url: "/documents",
+    },
+    {
+      title: "Images",
+      size: totalSpace.image.size,
+      latestDate: formatDate(totalSpace.image.latestDate),
+      icon: "/assets/icons/file-image-light.svg",
+      url: "/images",
+    },
+    {
+      title: "Media",
+      size: totalSpace.video.size + totalSpace.audio.size,
+      latestDate: formatDate(mediaLatest),
+      icon: "/assets/icons/file-video-light.svg",
+      url: "/media",
+    },
+    {
+      title: "Others",
+      size: totalSpace.other.size,
+      latestDate: formatDate(totalSpace.other.latestDate),
+      icon: "/assets/icons/file-other-light.svg",
+      url: "/others",
+    },
+  ];
+};
+
+export const getFileTypesParams = (type: string): string[] => {
+  switch (type) {
+    case "documents":
+      return ["document"];
+    case "images":
+      return ["image"];
+    case "media":
+      return ["video", "audio"];
+    case "others":
+      return ["other"];
+    default:
+      return ["document"];
+  }
+};
 
 const Dashboard = async () => {
   // Parallel requests
@@ -81,7 +154,7 @@ const Dashboard = async () => {
                   <div className="flex flex-col gap-1">
                     <p className="recent-file-name">{file.name}</p>
                     <FormattedDateTime
-                      date={file.$createdAt}
+                      date={formatDate(file.$createdAt)}
                       className="caption"
                     />
                   </div>

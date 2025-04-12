@@ -182,8 +182,23 @@ export const constructDownloadUrl = (bucketFileId: string) => {
   return `${process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET}/files/${bucketFileId}/download?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT}`;
 };
 
+// Define an interface for each file type's information
+interface FileTypeInfo {
+  size: number;
+  latestDate: Date | string; // Use Date if you're handling Date objects, or string if dates are in string format
+}
+
+// Define an interface for the overall total space structure
+interface TotalSpace {
+  document: FileTypeInfo;
+  image: FileTypeInfo;
+  video: FileTypeInfo;
+  audio: FileTypeInfo;
+  other: FileTypeInfo;
+}
+
 // DASHBOARD UTILS
-export const getUsageSummary = (totalSpace: any) => {
+export const getUsageSummary = (totalSpace: TotalSpace) => {
   return [
     {
       title: "Documents",
@@ -219,7 +234,7 @@ export const getUsageSummary = (totalSpace: any) => {
   ];
 };
 
-export const getFileTypesParams = (type: string) => {
+export const getFileTypesParams = (type: string): string[] => {
   switch (type) {
     case "documents":
       return ["document"];
